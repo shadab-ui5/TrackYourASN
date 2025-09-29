@@ -1,0 +1,231 @@
+<mvc:View controllerName="hodek.asntracker.controller.ObjectPage"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns:m="sap.m"
+    xmlns="sap.uxap">
+    <m:Page id="page2" title="Track Your ASN" class="ICTBCustom" showHeader="true" showNavButton="true" navButtonPress="onNavBack">
+        <ObjectPageLayout id="ObjectPageLayout" class="sapUiNoContentPadding" upperCaseAnchorBar="false">
+            <headerTitle>
+                <ObjectPageHeader id="_IDGenObjectPageHeader" objectTitle="{selectedModel>/AsnNo}" />
+            </headerTitle>
+            <sections>
+                <ObjectPageSection id="_IDGenObjectPageSection1" titleUppercase="false" title="Header Data">
+                    <subSections>
+                        <ObjectPageSubSection id="_IDGenObjectPageSubSection" titleUppercase="false">
+                            <blocks>
+                                <m:VBox width="100%">
+                                    <!-- Row 1 -->
+                                    <m:HBox width="100%" justifyContent="SpaceBetween" class="sapUiSmallMarginBottom">
+                                        <m:VBox width="20%">
+                                            <m:Label text="ASN No:"/>
+                                            <m:Text text="{selectedModel>/AsnNo}"/>
+                                        </m:VBox>
+                                        <m:VBox width="20%">
+                                            <m:Label text="Invoice No:"/>
+                                            <m:Text text="{selectedModel>/invoice_no}"/>
+                                        </m:VBox>
+                                        <m:VBox width="20%">
+                                            <m:Label text="PO Number:"/>
+                                            <m:Text text="{selectedModel>/ponumber}"/>
+                                        </m:VBox>
+                                        <m:VBox width="20%">
+                                            <m:Label text="Plant:"/>
+                                            <m:Text text="{selectedModel>/PlantName} ({selectedModel>/plant})"/>
+                                        </m:VBox>
+                                        <m:VBox width="20%">
+                                            <m:Label text="Amount:"/>
+                                            <m:Text text="{selectedModel>/amount}"/>
+                                        </m:VBox>
+                                    </m:HBox>
+
+                                    <!-- Row 2 -->
+                                    <m:HBox width="100%" justifyContent="SpaceBetween" class="sapUiSmallMarginBottom">
+                                        <m:VBox width="20%">
+                                            <m:Label text="System Date:"/>
+                                            <m:Text text="{path:'selectedModel>/system_date', formatter:'.formatter.formatDateToYyyyMmDd'}"/>
+                                        </m:VBox>
+                                        <m:VBox width="20%">
+                                            <m:Label text="Invoice Date:"/>
+                                            <m:Text text="{path:'selectedModel>/invoice_date', formatter:'.formatter.formatDateToYyyyMmDd'}"/>
+                                        </m:VBox>
+                                        <m:VBox width="20%">
+                                            <m:Label text="LR Date:"/>
+                                            <m:Text text="{path:'selectedModel>/lrdate', formatter:'.formatter.formatDateToYyyyMmDd'}"/>
+                                        </m:VBox>
+                                        <m:VBox width="20%">
+                                            <m:Label text="LR Number:"/>
+                                            <m:Text text="{selectedModel>/lrnumber}"/>
+                                        </m:VBox>
+                                        <m:VBox width="20%">
+                                            <m:Label text="E-Way Bill No:"/>
+                                            <m:Text text="{selectedModel>/ewayno}"/>
+                                        </m:VBox>
+                                    </m:HBox>
+
+                                    <!-- Row 3 -->
+                                    <m:HBox width="100%" justifyContent="SpaceBetween" class="sapUiSmallMarginBottom">
+                                        <m:VBox width="20%">
+                                            <m:Label text="Vehicle No:"/>
+                                            <m:Text text="{selectedModel>/vehicleno}"/>
+                                        </m:VBox>
+                                        <m:VBox width="20%">
+                                            <m:Label text="Transporter:"/>
+                                            <m:Text text="{selectedModel>/transporter}"/>
+                                        </m:VBox>
+                                        <m:VBox width="20%">
+                                            <m:Label text="Status:"/>
+                                            <m:ObjectStatus text="{selectedModel>/Status_Desc}" inverted="true" icon="{path:'selectedModel>/Status_Desc', formatter:'.formatter.formatIcon'}" state="{path:'selectedModel>/Status_Desc', formatter:'.formatter.formatState'}"/>
+                                        </m:VBox>
+                                        <m:VBox width="20%">
+                                            <m:Label text="Remarks:"/>
+                                            <m:Text text="{selectedModel>/remarks}"/>
+                                        </m:VBox>
+                                        <m:VBox width="20%">
+                                            <m:Label text="Vendor Name:"/>
+                                            <m:Text text="{selectedModel>/vendorname}"/>
+                                        </m:VBox>
+                                    </m:HBox>
+                                </m:VBox>
+
+                            </blocks>
+                        </ObjectPageSubSection>
+                    </subSections>
+                </ObjectPageSection>
+
+                <ObjectPageSection id="_IDGenObjectPageSection3" titleUppercase="false" title="Item">
+                    <subSections>
+                        <ObjectPageSubSection id="_IDGenObjectPageSubSection2" titleUppercase="false">
+                            <blocks>
+                                <m:Table id="detailTable" items="{path: 'AsnDetailModel>/'}" ariaLabelledBy="title" fixedLayout="Strict" autoPopinMode="true" growing="true" sticky="ColumnHeaders,HeaderToolbar" popinLayout="GridSmall" growingScrollToLoad="true" growingThreshold="20" updateStarted="onUpdateStartPoHeaderTable" itemPress="onLineItemPress" selectionChange="onSelectionChange">
+
+                                    <m:headerToolbar>
+                                        <m:OverflowToolbar id="_IDGenOverflowToolbar">
+                                            <m:Title id="title" text="Items"/>
+                                            <m:ToolbarSeparator id="_IDGenToolbarSeparator1"/>
+                                            <m:ToolbarSpacer id="_IDGenToolbarSpacer"/>
+                                        </m:OverflowToolbar>
+                                    </m:headerToolbar>
+
+                                    <m:noData>
+                                        <m:IllustratedMessage id="_IDGenIllustratedMessage"/>
+                                    </m:noData>
+
+                                    <!-- ================= Visible Columns ================= -->
+                                    <m:columns>
+                                        <m:Column id="colBillingDoc">
+                                            <m:header>
+                                                <m:Text text="Item No"/>
+                                            </m:header>
+                                        </m:Column>
+                                        <m:Column id="colBillDate">
+                                            <m:header>
+                                                <m:Text text="Material"/>
+                                            </m:header>
+                                        </m:Column>
+                                        <m:Column id="colPOCustomer">
+                                            <m:header>
+                                                <m:Text text="PO Number"/>
+                                            </m:header>
+                                        </m:Column>
+
+                                        <!-- ================= Hidden Columns ================= -->
+                                        <m:Column id="colPayerParty" visible="true">
+                                            <m:header>
+                                                <m:Text text="Quantity"/>
+                                            </m:header>
+                                        </m:Column>
+                                        <m:Column id="colStatus" visible="true">
+                                            <m:header>
+                                                <m:Text text="Quality Check"/>
+                                            </m:header>
+                                        </m:Column>
+                                        <m:Column id="colAssignRef" visible="true">
+                                            <m:header>
+                                                <m:Text text="Posted Quantity"/>
+                                            </m:header>
+                                        </m:Column>
+                                        <m:Column id="colokqty" visible="true">
+                                            <m:header>
+                                                <m:Text text="Quality OK Qty."/>
+                                            </m:header>
+                                        </m:Column>
+                                        <m:Column id="colnokqty" visible="true">
+                                            <m:header>
+                                                <m:Text text="Quality NOT OK Qty."/>
+                                            </m:header>
+                                        </m:Column>
+                                        <m:Column id="colstat" visible="false">
+                                            <m:header>
+                                                <m:Text text=""/>
+                                            </m:header>
+                                        </m:Column>
+                                    </m:columns>
+
+                                    <m:items>
+                                        <m:ColumnListItem vAlign="Middle">
+                                            <m:cells>
+                                                <!-- Visible new fields -->
+                                                <m:Text text="{AsnDetailModel>Itemno}"/>
+                                                <m:Text text="{AsnDetailModel>Materialdesc} ({AsnDetailModel>Material})"/>
+                                                <m:Text text="{AsnDetailModel>Ponumber}"/>
+
+                                                <!-- Hidden fields -->
+                                                <m:Text text="{AsnDetailModel>Quantity} {AsnDetailModel>Uom}"/>
+                                                <m:ObjectStatus text="{path: 'AsnDetailModel>', formatter: '.formatter.formatStatusText'}" state="{path: 'AsnDetailModel>', formatter: '.formatter.formatStatusState'}" icon="{path: 'AsnDetailModel>', formatter: '.formatter.formatStatusIcon'}"/>
+
+                                                <m:Text text="{AsnDetailModel>Postedquantity} {AsnDetailModel>Uom}"/>
+                                                <m:Text text="{AsnDetailModel>InspectionLotOKQty} {AsnDetailModel>Uom}"/>
+                                                <m:Text text="{AsnDetailModel>InspectionLotNOTOKQty} {AsnDetailModel>Uom}"/>
+                                                <m:Text text="{AsnDetailModel>Status}"/>
+                                            </m:cells>
+                                        </m:ColumnListItem>
+                                    </m:items>
+                                </m:Table>
+                            </blocks>
+                        </ObjectPageSubSection>
+                    </subSections>
+                </ObjectPageSection>
+
+                <ObjectPageSection id="_IDGenObjectPageSection4" titleUppercase="false" title="Attachment">
+                    <subSections>
+                        <ObjectPageSubSection id="_IDGenObjectPageSubSection3" titleUppercase="false">
+                            <blocks>
+                                <m:VBox>
+                                    <m:Toolbar>
+                                        <m:Title text="Files" level="H2"/>
+                                        <m:ToolbarSpacer/>
+                                        <m:Button text="Upload" enabled="false" visible="false" press="onUpload"/>
+                                        <m:Button id="btnDownload" text="Download" press="onDownload"/>
+                                        <m:Button id="btnDelete" text="Delete" enabled="false" visible="false" press="onDelete"/>
+                                    </m:Toolbar>
+
+                                    <m:Table id="fileTable" mode="SingleSelectLeft" items="{files>/}" selectionChange="onFileSelect">
+                                        <m:columns>
+                                            <m:Column>
+                                                <m:Text text="File Name"/>
+                                            </m:Column>
+                                            <m:Column>
+                                                <m:Text text="Size"/>
+                                            </m:Column>
+                                            <m:Column>
+                                                <m:Text text="Last Modified"/>
+                                            </m:Column>
+                                        </m:columns>
+                                        <m:items>
+                                            <m:ColumnListItem>
+                                                <m:cells>
+                                                    <m:ObjectStatus text="{path:'files>objectName', formatter:'.getFileName'}" icon="{path:'files>objectName',formatter:'.getIconSrc'}" state="Indication06"/>
+                                                    <m:Text text="{parts: ['files>size'], formatter: '.formatSize'}"/>
+                                                    <m:Text text="{parts:['files>lastModified'],formatter:'.formatter.formatDateToDDMMYYYY'}"/>
+                                                </m:cells>
+                                            </m:ColumnListItem>
+                                        </m:items>
+                                    </m:Table>
+                                </m:VBox>
+                            </blocks>
+                        </ObjectPageSubSection>
+                    </subSections>
+                </ObjectPageSection>
+            </sections>
+        </ObjectPageLayout>
+    </m:Page>
+</mvc:View>

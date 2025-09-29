@@ -1,0 +1,179 @@
+<mvc:View controllerName="hodek.asntracker.controller.Main"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns:fb="sap.ui.comp.filterbar"
+    xmlns:core="sap.ui.core"
+    xmlns="sap.m"
+    xmlns:f="sap.f"
+    xmlns:svm="sap.ui.comp.smartvariants"
+    xmlns:smartMultiInput="sap.ui.comp.smartmultiinput"
+    xmlns:plugins="sap.m.plugins"
+    xmlns:columnmenu="sap.m.table.columnmenu"
+    xmlns:sap.ui.fl="sap.ui.fl"
+    xmlns:sap.ui.dt="sap.ui.dt"
+    xmlns:dnd="sap.ui.core.dnd"
+    xmlns:app="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
+    <Page id="page1" title="Track Your ASN" class="ICTBCustom">
+        <f:DynamicPage id="_IDGenDynamicPage2" class="sapUiNoContentPadding" headerExpanded="{/headerExpanded}">
+            <f:title>
+                <f:DynamicPageTitle id="_IDGenDynamicPageTitle1">
+                    
+                </f:DynamicPageTitle>
+            </f:title>
+            <f:header>
+                <f:DynamicPageHeader id="_IDGenDynamicPageHeader2" class="myCustomHeader">
+                    <f:content>
+                        <!-- <Panel id="idPanelRAPO" class="sapUiContentPadding" headerText="General Data" visible="true"> -->
+                        <fb:FilterBar id="filterbar" useToolbar="false" search=".onFilterGo" filterChange=".onFilterChange" afterVariantLoad=".onAfterVariantLoad" >
+                            <fb:filterGroupItems>
+                                <!-- Company Code -->
+
+                                <!-- Accounting Document -->
+                                <fb:FilterGroupItem id="FilterGroupItem2" name="Invoice Number" label="Invoice Number" groupName="Group1" visibleInFilterBar="true">
+                                    <fb:control>
+                                        <MultiInput id="idAccountingDocument" width="100%" placeholder="Enter Invoice Number" showValueHelp="true" valueHelpRequest="onInvoiceValueHelp" submit=".onInvoiceValueSubmit" />
+                                    </fb:control>
+                                </fb:FilterGroupItem>
+                                <!-- Supplier -->
+                                <fb:FilterGroupItem id="FilterGroupItem5" name="ASN" label="ASN" groupName="Group1" visibleInFilterBar="true">
+                                    <fb:control>
+                                        <MultiInput id="idCustomer"  showValueHelp="true" valueHelpRequest="onAsnValueHelp" width="75%" placeholder="Select ASN"/>
+                                    </fb:control>
+                                </fb:FilterGroupItem>
+                                <fb:FilterGroupItem id="FilterGroupItem6" name="invoice Date" label="Invoice Date" groupName="Group1" visibleInFilterBar="true">
+                                    <fb:control>
+                                        <DateRangeSelection id="idPostingDate" class="DRS1" displayFormat="dd-MM-yyyy" change="handleChange" />
+                                    </fb:control>
+                                </fb:FilterGroupItem>
+
+
+                                <fb:FilterGroupItem id="FilterGroupItemStatus" name="Status" label="Status" groupName="Group1" visibleInFilterBar="true">
+                                    <fb:control>
+                                        <MultiComboBox id="idStatus" width="75%" placeholder="Select Status" selectionChange="onStatusChange">
+                                            <core:Item id="_IDGenItem1" key="ASN Created" text="ASN Created" />
+                                            <core:Item id="_IDGenItem2" key="ASN Cancelled" text="ASN Cancelled" />
+                                            <core:Item id="_IDGenItem3" key="Gate Entry Completed" text="Gate Entry Completed" />
+                                            <core:Item id="_IDGenItem4" key="Goods Receipt Rejected" text="Goods Receipt Rejected" />
+                                            <core:Item id="_IDGenItem5" key="Goods Receipt Accepted" text="Goods Receipt Accepted" />
+                                        </MultiComboBox>
+                                    </fb:control>
+                                </fb:FilterGroupItem>
+                            </fb:filterGroupItems>
+                        </fb:FilterBar>
+                    </f:content>
+                </f:DynamicPageHeader>
+            </f:header>
+            <f:content>
+                <VBox id="_IDGenVBox">
+
+                    <Table id="persoTable" items="{path: 'getListReport>/'}" ariaLabelledBy="title" fixedLayout="Strict" autoPopinMode="true" growing="true" sticky="ColumnHeaders,HeaderToolbar" popinLayout="GridSmall" growingScrollToLoad="true" growingThreshold="20" updateStarted="onUpdateStartPoHeaderTable" itemPress="onLineItemPress" selectionChange="onSelectionChange">
+
+                        <headerToolbar>
+                            <OverflowToolbar id="_IDGenOverflowToolbar">
+                                
+                                <ToolbarSpacer id="_IDGenToolbarSpacer"/>
+                                <Button id="_IDGenButton" icon="sap-icon://action-settings" press="openPersoDialog" tooltip="Settings"/>
+                            </OverflowToolbar>
+                        </headerToolbar>
+
+                        <infoToolbar>
+                            <OverflowToolbar id="filterInfo" visible="false" design="Info" active="true" press="onFilterInfoPress">
+                                <Text id="filterInfoText" wrapping="false" text="Table filter active" />
+                                <ToolbarSpacer id="_IDGenToolbarSpacer1" />
+                                <Button id="_IDGenButton1" tooltip="Remove All Filters" icon="sap-icon://decline" type="Transparent" press="onClearFilterPress" />
+                            </OverflowToolbar>
+                        </infoToolbar>
+
+                        <dependents>
+                            <plugins:ColumnResizer id="_IDGenColumnResizer" columnResize="onColumnResize"/>
+                            <columnmenu:Menu id="menu" beforeOpen="beforeOpenColumnMenu" showTableSettingsButton="true" tableSettingsPressed="openPersoDialog">
+                                <columnmenu:QuickSort id="_IDGenQuickSort" change="onSort">
+                                    <columnmenu:items>
+                                        <columnmenu:QuickSortItem id="_IDGenQuickSortItem"></columnmenu:QuickSortItem>
+                                    </columnmenu:items>
+                                </columnmenu:QuickSort>
+                                <columnmenu:QuickGroup id="_IDGenQuickGroup" change="onGroup">
+                                    <columnmenu:items>
+                                        <columnmenu:QuickGroupItem id="_IDGenQuickGroupItem"></columnmenu:QuickGroupItem>
+                                    </columnmenu:items>
+                                </columnmenu:QuickGroup>
+                            </columnmenu:Menu>
+                        </dependents>
+
+                        <dragDropConfig>
+                            <dnd:DragDropInfo id="_IDGenDragDropInfo" sourceAggregation="columns" targetAggregation="columns" dropPosition="Between" drop="onColumnMove"/>
+                        </dragDropConfig>
+
+                        <noData>
+                            <IllustratedMessage id="_IDGenIllustratedMessage"/>
+                        </noData>
+
+                        <!-- ================= Visible Columns ================= -->
+                        <columns>
+                            <Column id="colBillingDoc" app:p13nKey="AsnNo_col" headerMenu="menu">
+                                <header>
+                                    <Text text="ASN No"/>
+                                </header>
+                            </Column>
+                            <Column id="colBillDate" app:p13nKey="invoice_no_col" headerMenu="menu">
+                                <header>
+                                    <Text text="Invoice No"/>
+                                </header>
+                            </Column>
+                            <Column id="colTotalAmount" app:p13nKey="invoice_date_col" headerMenu="menu">
+                                <header>
+                                    <Text text="Invoice Date"/>
+                                </header>
+                            </Column>
+                            <Column id="colPOCustomer" app:p13nKey="ponumber_col" headerMenu="menu">
+                                <header>
+                                    <Text text="PO Number"/>
+                                </header>
+                            </Column>
+                            <Column id="colStatus" app:p13nKey="Status_Desc_col" headerMenu="menu">
+                                <header>
+                                    <Text text="Status Description"/>
+                                </header>
+                            </Column>
+                            <!-- ================= Hidden Columns (personalization available) ================= -->
+                            <Column id="colPayerParty" app:p13nKey="PlantName_col" visible="true" headerMenu="menu">
+                                <header>
+                                    <Text text="Plant Name"/>
+                                </header>
+                            </Column>
+                            <Column id="colAssignRef" app:p13nKey="amount_col" visible="true" headerMenu="menu">
+                                <header>
+                                    <Text text="Amount"/>
+                                </header>
+                            </Column>
+                            <Column id="colStatussRef" app:p13nKey="" visible="false" >
+                                <header>
+                                    <Text text=""/>
+                                </header>
+                            </Column>
+
+                        </columns>
+
+                        <items >
+                            <ColumnListItem vAlign="Middle" type="Navigation">
+                                <cells>
+                                    <!-- Visible new fields -->
+                                    <Text text="{getListReport>AsnNo}"/>
+                                    <Text text="{getListReport>invoice_no}"/>
+                                    <Text text="{path:'getListReport>invoice_date',formatter:'.formatter.formatDateToYyyyMmDd'}"/>
+                                    <Text text="{getListReport>ponumber}"/>
+                                    <!-- <Text text="{getListReport>Status_Desc}"/> -->
+                                    <ObjectStatus id="_IDGenObjectStatus"  text="{getListReport>Status_Desc}"  icon="{path:'getListReport>Status_Desc',formatter:'.formatter.formatIcon'}" state="{path:'getListReport>Status_Desc',formatter:'.formatter.formatState'}" />
+                                    <!-- Hidden fields -->
+                                    <Text text="{getListReport>PlantName}({getListReport>plant})"/>
+                                    <Text text="{getListReport>amount}"/>
+                                    
+                                </cells>
+                            </ColumnListItem>
+                        </items>
+                    </Table>
+
+                </VBox>
+            </f:content>
+        </f:DynamicPage>
+    </Page>
+</mvc:View>

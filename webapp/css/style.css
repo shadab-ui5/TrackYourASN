@@ -1,0 +1,51 @@
+/* Enter your custom styles here */
+.ICTBCustom .sapMPageHeader .sapMBar {
+    background: linear-gradient(90deg,
+            #0057d2 0%,
+            rgba(0, 87, 210, 0.5) 75%,
+            #0057d2 100%),
+        url(../images/GlobalActionBar.jpg) no-repeat center center;
+    background-size: cover;
+    color: white;
+}
+
+/* Make title text white */
+.ICTBCustom .sapMPageHeader .sapMBar .sapMTitle {
+    color: white !important;
+    font-weight: 600;
+    margin-left: 1rem !important;
+}
+
+/* Remove left/right padding from DynamicPageHeader */
+.myCustomHeader.sapFDynamicPageHeader.sapFDynamicPageHeaderWithContent {
+    padding-left: 1rem !important;
+    padding-right: 0 !important;
+}
+
+/* Force the filter bar content inside header to align left */
+.myCustomHeader .sapUiAFLayout {
+    justify-content: flex-start !important;
+    /* Align filters left */
+}
+
+/* Optional: make filters sit tighter */
+.myCustomHeader .sapUiAFLayout .sapUiAFLayoutItem {
+    margin-right: 1rem;
+    /* adjust spacing between filters */
+}
+
+/* Style header buttons inside Page title bar */
+.ICTBCustom .sapMPageHeader .sapMBar .sapMBtnInner {
+    color: white !important;
+    border-color: white !important;
+}
+
+/* Optional hover effect */
+.ICTBCustom .sapMPageHeader .sapMBar .sapMBtnInner:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Target back/nav button inside a Page */
+.ICTBCustom .sapMBarLeft .sapMBtn .sapUiIcon {
+    color: white !important;
+}
