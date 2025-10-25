@@ -75,13 +75,18 @@
                                             <m:Label text="Status:"/>
                                             <m:ObjectStatus text="{selectedModel>/Status_Desc}" inverted="true" icon="{path:'selectedModel>/Status_Desc', formatter:'.formatter.formatIcon'}" state="{path:'selectedModel>/Status_Desc', formatter:'.formatter.formatState'}"/>
                                         </m:VBox>
-                                        <m:VBox width="20%">
-                                            <m:Label text="Remarks:"/>
-                                            <m:Text text="{selectedModel>/remarks}"/>
-                                        </m:VBox>
+
                                         <m:VBox width="20%">
                                             <m:Label text="Vendor Name:"/>
-                                            <m:Text text="{selectedModel>/vendorname}"/>
+                                            <m:Text text="{selectedModel>/SupplierName}({selectedModel>/vendor})"/>
+                                        </m:VBox>
+                                        <m:VBox width="20%">
+                                            <m:Label text="Goods Receipt No"/>
+                                            <m:Text text="{selectedModel>/MaterialDocument}"/>
+                                        </m:VBox>
+                                        <m:VBox width="20%">
+                                            <m:Label text="Supplier Invoice No"/>
+                                            <m:Text text="{selectedModel>/supplierinvno}"/>
                                         </m:VBox>
                                     </m:HBox>
                                 </m:VBox>

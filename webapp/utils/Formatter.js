@@ -29,6 +29,8 @@ sap.ui.define([
                         return "sap-icon://error"; // red
                     case "Goods Receipt Accepted":
                         return "sap-icon://sys-enter"; // green
+                    case "Invoice Created for Payment":
+                        return "sap-icon://payment-approval"; // green
                     default:
                         return "sap-icon://question-mark";
                 }
@@ -47,6 +49,8 @@ sap.ui.define([
                         return "Error"; // Red
                     case "Goods Receipt Accepted":
                         return "Success"; // Green
+                    case "Invoice Created for Payment":
+                        return "Indication07"; // Green
                     default:
                         return "None";
                 }
@@ -70,7 +74,7 @@ sap.ui.define([
                 }
 
                 // Rule 2: Passed
-                if ((+oRow.Postedquantity || 0) === (+oRow.Quantity || 0) && (+oRow.InspectionLotNOTOKQty || 0) === 0) {
+                if ((+oRow.Postedquantity || 0) === (+oRow.InspectionLotOKQty || 0) && (+oRow.InspectionLotNOTOKQty || 0) === 0) {
                     return "Passed";
                 }
 

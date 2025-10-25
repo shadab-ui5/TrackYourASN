@@ -25,6 +25,17 @@ sap.ui.define([
 		onInit: function () {
 			// this.onSet7DaysRange();
 			// In onInit
+			let oSupplierModel = new sap.ui.model.json.JSONModel({});
+			this.getView().setModel(oSupplierModel, "SupplierModel");
+			this.getUserSupplier()
+				.then(() => {
+					// After the supplier data is fetched, load the billing documents
+					this._loadBillingDocumentData([], true);
+				})
+				.catch((err) => {
+					console.error("Error fetching supplier:", err);
+					// Optionally, handle error (e.g., show MessageBox)
+				});
 			this._iPageSize = 100;       // number of items per batch
 			this._iPage = 0;            // current page index
 			this._bAllDataLoaded = false;
@@ -36,8 +47,7 @@ sap.ui.define([
 			this._registerForP13n();
 			// this.onFilterGo();
 			this._aCurrentFilters = [];
-
-			this._loadBillingDocumentData(null, true);
+			// this._loadBillingDocumentData(null, true);
 			const oRouter = this.getOwnerComponent().getRouter();
 			oRouter.getRoute("RouteMain").attachPatternMatched(this._onRouteMatched, this);
 
@@ -430,6 +440,179 @@ sap.ui.define([
 				Engine.getInstance().applyState(oTable, oState);
 			});
 		},
+		// onInvoiceValueHelp: function () {
+		// 	var that = this;
+
+		// 	// ===================================================
+		// 	// 1. Define columns for Value Help
+		// 	// ===================================================
+		// 	var aCols = [
+		// 		{ label: "Invoice No", path: "invoice_no", width: "12rem" },
+		// 		// { label: "Customer Name", path: "CustomerName", width: "12rem" }
+		// 	];
+
+		// 	// ===================================================
+		// 	// 2. Create the ValueHelpDialog
+		// 	// ===================================================
+		// 	var oVHD = new ValueHelpDialog({
+		// 		title: "Select Invoice no",
+		// 		supportMultiselect: true,
+		// 		key: "invoice_no",            // key field
+		// 		descriptionKey: "invoice_no", // field shown in description
+		// 		ok: function (e) {
+		// 			var aTokens = e.getParameter("tokens"); // all selected tokens
+		// 			var oMultiInput = that.byId("idAccountingDocument");
+
+		// 			// Remove existing tokens
+		// 			oMultiInput.removeAllTokens();
+
+		// 			// Add all selected tokens
+		// 			aTokens.forEach(function (oToken) {
+		// 				oMultiInput.addToken(new sap.m.Token({
+		// 					key: oToken.getKey(),
+		// 					text: oToken.getText()
+		// 				}));
+		// 			});
+
+		// 			// Fire change event with combined keys (optional)
+		// 			var sCombined = aTokens.map(t => t.getKey()).join(", ");
+		// 			oMultiInput.fireChange({
+		// 				value: sCombined,
+		// 				newValue: sCombined,
+		// 				valid: true
+		// 			});
+
+		// 			oVHD.close();
+		// 		},
+		// 		cancel: function () { oVHD.close(); },
+		// 		afterClose: function () { oVHD.destroy(); }
+		// 	});
+
+		// 	// ===================================================
+		// 	// 3. Configure Table inside ValueHelpDialog
+		// 	// ===================================================
+		// 	var oTable = oVHD.getTable();
+		// 	// Build mandatory filter for DocumentType
+		// 	// var oDocTypeFilter = new sap.ui.model.Filter("BillingDocumentType", sap.ui.model.FilterOperator.EQ, sDocType);
+		// 	// Add columns and row/item binding depending on table type
+		// 	if (oTable.bindRows) {
+		// 		// Grid Table (sap.ui.table.Table)
+		// 		aCols.forEach(c => oTable.addColumn(new sap.ui.table.Column({
+		// 			label: c.label,
+		// 			template: new sap.m.Text({ text: "{" + c.path + "}" }),
+		// 			width: c.width
+		// 		})));
+		// 		oTable.bindRows({ path: "/Header" });
+		// 	} else {
+		// 		// Responsive Table (sap.m.Table)
+		// 		aCols.forEach(c => oTable.addColumn(new sap.m.Column({
+		// 			header: new sap.m.Label({ text: c.label })
+		// 		})));
+		// 		oTable.bindItems({
+		// 			path: "/Header",
+		// 			template: new sap.m.ColumnListItem({
+		// 				cells: aCols.map(c => new sap.m.Text({ text: "{" + c.path + "}" }))
+		// 			})
+		// 		});
+		// 	}
+
+		// 	// ===================================================
+		// 	// 4. Central Search Function
+		// 	// ===================================================
+		// 	var fnDoSearch = function (sQuery) {
+		// 		sQuery = (sQuery || "").trim();
+
+		// 		var sAgg = oTable.bindRows ? "rows" : "items";
+		// 		var oBinding = oTable.getBinding(sAgg);
+
+		// 		if (!sQuery) {
+		// 			// Clear filters if query empty
+		// 			oBinding.filter([]);
+		// 			return;
+		// 		}
+
+		// 		// --- Step A: Try client-side filtering ---
+		// 		var aFilters = aCols.map(c =>
+		// 			new sap.ui.model.Filter(c.path, sap.ui.model.FilterOperator.Contains, sQuery)
+		// 		);
+
+		// 		// combine them with OR
+		// 		var oOrFilter = new sap.ui.model.Filter({
+		// 			filters: aFilters,
+		// 			and: false
+		// 		});
+
+		// 		oBinding.filter([oOrFilter], "Application");
+
+		// 		// --- Step B: If no results, fallback to server-side search ---
+		// 		if (oBinding.getLength() === 0) {
+		// 			var oModel = that.getView().getModel();
+		// 			// Server-side (ODataModel)
+		// 			oModel.read("/Header", {
+		// 				filters: [oOrFilter],        // <-- use Filter object, not string
+		// 				urlParameters: { "$top": 200 },
+		// 				success: function (oData) {
+		// 					var oJson = new sap.ui.model.json.JSONModel({
+		// 						Header: oData.results
+		// 					});
+		// 					oTable.setModel(oJson);
+		// 					// rebind to make sure busy state clears
+		// 					if (oTable.bindRows) {
+		// 						oTable.bindRows({ path: "/Header" });
+		// 					} else {
+		// 						oTable.bindItems({
+		// 							path: "/Header",
+		// 							template: new sap.m.ColumnListItem({
+		// 								cells: aCols.map(c => new sap.m.Text({ text: "{" + c.path + "}" }))
+		// 							})
+		// 						});
+		// 					}
+		// 					oTable.setBusy(false);
+		// 					oVHD.setBusy(false);
+		// 				},
+		// 				error: function () {
+		// 					sap.m.MessageToast.show("Server search failed");
+		// 				}
+		// 			});
+		// 		}
+		// 	};
+
+		// 	// ===================================================
+		// 	// 5. SearchField + FilterBar Setup
+		// 	// ===================================================
+		// 	var oBasicSearch = new sap.m.SearchField({
+		// 		width: "100%",
+		// 		search: function (oEvt) {   // triggers on Enter or search icon
+		// 			fnDoSearch(oEvt.getSource().getValue());
+		// 		}
+		// 		// Optional: add liveChange if you want instant typing search
+		// 		// liveChange: function (oEvt) {
+		// 		//     fnDoSearch(oEvt.getSource().getValue());
+		// 		// }
+		// 	});
+
+		// 	var oFilterBar = new sap.ui.comp.filterbar.FilterBar({
+		// 		advancedMode: true,
+		// 		search: function () {
+		// 			fnDoSearch(oBasicSearch.getValue());
+		// 		}
+		// 	});
+		// 	oFilterBar.setBasicSearch(oBasicSearch);
+		// 	oVHD.setFilterBar(oFilterBar);
+
+		// 	// ===================================================
+		// 	// 6. Prefill Search with existing value (if any)
+		// 	// ===================================================
+		// 	var sPrefill = this.byId("idAccountingDocument").getValue();
+		// 	oBasicSearch.setValue(sPrefill);
+		// 	oVHD.setBasicSearchText(sPrefill);
+
+		// 	// ===================================================
+		// 	// 7. Attach model and open dialog
+		// 	// ===================================================
+		// 	oTable.setModel(this.getView().getModel());
+		// 	oVHD.open();
+		// },
 		onInvoiceValueHelp: function () {
 			var that = this;
 
@@ -438,40 +621,28 @@ sap.ui.define([
 			// ===================================================
 			var aCols = [
 				{ label: "Invoice No", path: "invoice_no", width: "12rem" },
-				// { label: "Customer Name", path: "CustomerName", width: "12rem" }
 			];
 
 			// ===================================================
 			// 2. Create the ValueHelpDialog
 			// ===================================================
 			var oVHD = new ValueHelpDialog({
-				title: "Select Invoice no",
+				title: "Select Invoice No",
 				supportMultiselect: true,
-				key: "invoice_no",            // key field
-				descriptionKey: "invoice_no", // field shown in description
+				key: "invoice_no",
+				descriptionKey: "invoice_no",
 				ok: function (e) {
-					var aTokens = e.getParameter("tokens"); // all selected tokens
+					var aTokens = e.getParameter("tokens");
 					var oMultiInput = that.byId("idAccountingDocument");
-
-					// Remove existing tokens
 					oMultiInput.removeAllTokens();
-
-					// Add all selected tokens
 					aTokens.forEach(function (oToken) {
 						oMultiInput.addToken(new sap.m.Token({
 							key: oToken.getKey(),
 							text: oToken.getText()
 						}));
 					});
-
-					// Fire change event with combined keys (optional)
 					var sCombined = aTokens.map(t => t.getKey()).join(", ");
-					oMultiInput.fireChange({
-						value: sCombined,
-						newValue: sCombined,
-						valid: true
-					});
-
+					oMultiInput.fireChange({ value: sCombined, newValue: sCombined, valid: true });
 					oVHD.close();
 				},
 				cancel: function () { oVHD.close(); },
@@ -482,24 +653,50 @@ sap.ui.define([
 			// 3. Configure Table inside ValueHelpDialog
 			// ===================================================
 			var oTable = oVHD.getTable();
-			// Build mandatory filter for DocumentType
-			// var oDocTypeFilter = new sap.ui.model.Filter("BillingDocumentType", sap.ui.model.FilterOperator.EQ, sDocType);
-			// Add columns and row/item binding depending on table type
+			aCols.forEach(c => {
+				if (oTable.bindRows) {
+					oTable.addColumn(new sap.ui.table.Column({
+						label: c.label,
+						template: new sap.m.Text({ text: "{" + c.path + "}" }),
+						width: c.width
+					}));
+				} else {
+					oTable.addColumn(new sap.m.Column({
+						header: new sap.m.Label({ text: c.label })
+					}));
+				}
+			});
+
+			// ===================================================
+			// 4. Build default Supplier filter (always applied)
+			// ===================================================
+			var oVendorOrFilter = null;
+			let oSupplierModel = that.getView().getModel("SupplierModel");
+			if (oSupplierModel) {
+				let aData = oSupplierModel.getData();
+				if (aData && aData.length > 0) {
+					let aVendorFilters = aData.map(c =>
+						new sap.ui.model.Filter("vendor", sap.ui.model.FilterOperator.EQ, c.Supplier)
+					);
+					oVendorOrFilter = new sap.ui.model.Filter({
+						filters: aVendorFilters,
+						and: false // OR across vendors
+					});
+				}
+			}
+
+			// ===================================================
+			// 5. Bind the table with supplier filter pre-applied
+			// ===================================================
 			if (oTable.bindRows) {
-				// Grid Table (sap.ui.table.Table)
-				aCols.forEach(c => oTable.addColumn(new sap.ui.table.Column({
-					label: c.label,
-					template: new sap.m.Text({ text: "{" + c.path + "}" }),
-					width: c.width
-				})));
-				oTable.bindRows({ path: "/Header" });
+				oTable.bindRows({
+					path: "/Header",
+					filters: oVendorOrFilter ? [oVendorOrFilter] : []
+				});
 			} else {
-				// Responsive Table (sap.m.Table)
-				aCols.forEach(c => oTable.addColumn(new sap.m.Column({
-					header: new sap.m.Label({ text: c.label })
-				})));
 				oTable.bindItems({
 					path: "/Header",
+					filters: oVendorOrFilter ? [oVendorOrFilter] : [],
 					template: new sap.m.ColumnListItem({
 						cells: aCols.map(c => new sap.m.Text({ text: "{" + c.path + "}" }))
 					})
@@ -507,78 +704,42 @@ sap.ui.define([
 			}
 
 			// ===================================================
-			// 4. Central Search Function
+			// 6. Central Search Function (also ANDs with supplier)
 			// ===================================================
 			var fnDoSearch = function (sQuery) {
 				sQuery = (sQuery || "").trim();
-
 				var sAgg = oTable.bindRows ? "rows" : "items";
 				var oBinding = oTable.getBinding(sAgg);
 
 				if (!sQuery) {
-					// Clear filters if query empty
-					oBinding.filter([]);
+					oBinding.filter(oVendorOrFilter ? [oVendorOrFilter] : []); // supplier-only filter
 					return;
 				}
 
-				// --- Step A: Try client-side filtering ---
-				var aFilters = aCols.map(c =>
+				var aTextFilters = aCols.map(c =>
 					new sap.ui.model.Filter(c.path, sap.ui.model.FilterOperator.Contains, sQuery)
 				);
+				var oTextOrFilter = new sap.ui.model.Filter({ filters: aTextFilters, and: false });
 
-				// combine them with OR
-				var oOrFilter = new sap.ui.model.Filter({
-					filters: aFilters,
-					and: false
+				var aFinalFilters = [oTextOrFilter];
+				if (oVendorOrFilter) aFinalFilters.push(oVendorOrFilter);
+
+				var oFinalFilter = new sap.ui.model.Filter({
+					filters: aFinalFilters,
+					and: true // text AND supplier
 				});
 
-				oBinding.filter([oOrFilter], "Application");
-
-				// --- Step B: If no results, fallback to server-side search ---
-				if (oBinding.getLength() === 0) {
-					var oModel = that.getView().getModel();
-					// Server-side (ODataModel)
-					oModel.read("/Header", {
-						filters: [oOrFilter],        // <-- use Filter object, not string
-						urlParameters: { "$top": 200 },
-						success: function (oData) {
-							var oJson = new sap.ui.model.json.JSONModel({
-								Header: oData.results
-							});
-							oTable.setModel(oJson);
-							// rebind to make sure busy state clears
-							if (oTable.bindRows) {
-								oTable.bindRows({ path: "/Header" });
-							} else {
-								oTable.bindItems({
-									path: "/Header",
-									template: new sap.m.ColumnListItem({
-										cells: aCols.map(c => new sap.m.Text({ text: "{" + c.path + "}" }))
-									})
-								});
-							}
-							oTable.setBusy(false);
-							oVHD.setBusy(false);
-						},
-						error: function () {
-							sap.m.MessageToast.show("Server search failed");
-						}
-					});
-				}
+				oBinding.filter([oFinalFilter], "Application");
 			};
 
 			// ===================================================
-			// 5. SearchField + FilterBar Setup
+			// 7. FilterBar + SearchField
 			// ===================================================
 			var oBasicSearch = new sap.m.SearchField({
 				width: "100%",
-				search: function (oEvt) {   // triggers on Enter or search icon
+				search: function (oEvt) {
 					fnDoSearch(oEvt.getSource().getValue());
 				}
-				// Optional: add liveChange if you want instant typing search
-				// liveChange: function (oEvt) {
-				//     fnDoSearch(oEvt.getSource().getValue());
-				// }
 			});
 
 			var oFilterBar = new sap.ui.comp.filterbar.FilterBar({
@@ -591,18 +752,190 @@ sap.ui.define([
 			oVHD.setFilterBar(oFilterBar);
 
 			// ===================================================
-			// 6. Prefill Search with existing value (if any)
+			// 8. Prefill & Open
 			// ===================================================
 			var sPrefill = this.byId("idAccountingDocument").getValue();
 			oBasicSearch.setValue(sPrefill);
-			oVHD.setBasicSearchText(sPrefill);
-
-			// ===================================================
-			// 7. Attach model and open dialog
-			// ===================================================
 			oTable.setModel(this.getView().getModel());
 			oVHD.open();
 		},
+		// onAsnValueHelp: function () {
+		// 	var that = this;
+
+		// 	// ===================================================
+		// 	// 1. Define columns for Value Help
+		// 	// ===================================================
+		// 	var aCols = [
+		// 		{ label: "ASN No", path: "AsnNo", width: "12rem" },
+		// 		// { label: "Customer Name", path: "CustomerName", width: "12rem" }
+		// 	];
+
+		// 	// ===================================================
+		// 	// 2. Create the ValueHelpDialog
+		// 	// ===================================================
+		// 	var oVHCustomer = new ValueHelpDialog({
+		// 		title: "Select ASN",
+		// 		supportMultiselect: true,
+		// 		key: "AsnNo",            // key field
+		// 		descriptionKey: "AsnNo", // field shown in description
+		// 		ok: function (e) {
+		// 			var aTokens = e.getParameter("tokens"); // all selected tokens
+		// 			var oMultiInput = that.byId("idCustomer");
+
+		// 			// Remove existing tokens before adding new ones
+		// 			oMultiInput.removeAllTokens();
+
+		// 			// Add all selected tokens
+		// 			aTokens.forEach(function (oToken) {
+		// 				oMultiInput.addToken(new sap.m.Token({
+		// 					key: oToken.getKey(),
+		// 					text: oToken.getText()
+		// 				}));
+		// 			});
+
+		// 			// Fire change event with combined values (optional)
+		// 			var sCombined = aTokens.map(t => t.getKey()).join(", ");
+		// 			oMultiInput.fireChange({
+		// 				value: sCombined,
+		// 				newValue: sCombined,
+		// 				valid: true
+		// 			});
+
+		// 			oVHCustomer.close();
+		// 		},
+		// 		cancel: function () { oVHCustomer.close(); },
+		// 		afterClose: function () { oVHCustomer.destroy(); }
+		// 	});
+
+		// 	// ===================================================
+		// 	// 3. Configure Table inside ValueHelpDialog
+		// 	// ===================================================
+		// 	var oTable = oVHCustomer.getTable();
+		// 	// Build mandatory filter for DocumentType
+		// 	// var oDocTypeFilter = new sap.ui.model.Filter("BillingDocumentType", sap.ui.model.FilterOperator.EQ, sDocType);
+		// 	// Add columns and row/item binding depending on table type
+		// 	if (oTable.bindRows) {
+		// 		// Grid Table (sap.ui.table.Table)
+		// 		aCols.forEach(c => oTable.addColumn(new sap.ui.table.Column({
+		// 			label: c.label,
+		// 			template: new sap.m.Text({ text: "{" + c.path + "}" }),
+		// 			width: c.width
+		// 		})));
+		// 		oTable.bindRows({
+		// 			path: "/Header",
+		// 			//  filters: [oDocTypeFilter] 
+		// 		});
+		// 	} else {
+		// 		// Responsive Table (sap.m.Table)
+		// 		aCols.forEach(c => oTable.addColumn(new sap.m.Column({
+		// 			header: new sap.m.Label({ text: c.label })
+		// 		})));
+		// 		oTable.bindItems({
+		// 			path: "/Header",
+		// 			template: new sap.m.ColumnListItem({
+		// 				cells: aCols.map(c => new sap.m.Text({ text: "{" + c.path + "}" }))
+		// 			})
+		// 		});
+		// 	}
+
+		// 	// ===================================================
+		// 	// 4. Central Search Function
+		// 	// ===================================================
+		// 	var fnDoSearch = function (sQuery) {
+		// 		sQuery = (sQuery || "").trim();
+
+		// 		var sAgg = oTable.bindRows ? "rows" : "items";
+		// 		var oBinding = oTable.getBinding(sAgg);
+
+		// 		if (!sQuery) {
+		// 			// Clear filters if query empty
+		// 			oBinding.filter([]);
+		// 			return;
+		// 		}
+
+		// 		// --- Step A: Try client-side filtering ---
+		// 		var aFilters = aCols.map(c =>
+		// 			new sap.ui.model.Filter(c.path, sap.ui.model.FilterOperator.Contains, sQuery)
+		// 		);
+
+		// 		// combine them with OR
+		// 		var oOrFilter = new sap.ui.model.Filter({
+		// 			filters: aFilters,
+		// 			and: false
+		// 		});
+
+		// 		oBinding.filter([oOrFilter], "Application");
+
+		// 		// --- Step B: If no results, fallback to server-side search ---
+		// 		if (oBinding.getLength() === 0) {
+		// 			var oModel = that.getView().getModel();
+		// 			// Server-side (ODataModel)
+		// 			oModel.read("/Header", {
+		// 				filters: [oOrFilter],        // <-- use Filter object, not string
+		// 				urlParameters: { "$top": 200 },
+		// 				success: function (oData) {
+		// 					var oJson = new sap.ui.model.json.JSONModel({
+		// 						Header: oData.results
+		// 					});
+		// 					oTable.setModel(oJson);
+		// 					// rebind to make sure busy state clears
+		// 					if (oTable.bindRows) {
+		// 						oTable.bindRows({ path: "/Header" });
+		// 					} else {
+		// 						oTable.bindItems({
+		// 							path: "/Header",
+		// 							template: new sap.m.ColumnListItem({
+		// 								cells: aCols.map(c => new sap.m.Text({ text: "{" + c.path + "}" }))
+		// 							})
+		// 						});
+		// 					}
+		// 					oTable.setBusy(false);
+		// 					oVHCustomer.setBusy(false);
+		// 				},
+		// 				error: function () {
+		// 					sap.m.MessageToast.show("Server search failed");
+		// 				}
+		// 			});
+		// 		}
+		// 	};
+
+		// 	// ===================================================
+		// 	// 5. SearchField + FilterBar Setup
+		// 	// ===================================================
+		// 	var oBasicSearch = new sap.m.SearchField({
+		// 		width: "100%",
+		// 		search: function (oEvt) {   // triggers on Enter or search icon
+		// 			fnDoSearch(oEvt.getSource().getValue());
+		// 		}
+		// 		// Optional: add liveChange if you want instant typing search
+		// 		// liveChange: function (oEvt) {
+		// 		//     fnDoSearch(oEvt.getSource().getValue());
+		// 		// }
+		// 	});
+
+		// 	var oFilterBar = new sap.ui.comp.filterbar.FilterBar({
+		// 		advancedMode: true,
+		// 		search: function () {
+		// 			fnDoSearch(oBasicSearch.getValue());
+		// 		}
+		// 	});
+		// 	oFilterBar.setBasicSearch(oBasicSearch);
+		// 	oVHCustomer.setFilterBar(oFilterBar);
+
+		// 	// ===================================================
+		// 	// 6. Prefill Search with existing value (if any)
+		// 	// ===================================================
+		// 	var sPrefill = this.byId("idCustomer").getValue();
+		// 	oBasicSearch.setValue(sPrefill);
+		// 	oVHCustomer.setBasicSearchText(sPrefill);
+
+		// 	// ===================================================
+		// 	// 7. Attach model and open dialog
+		// 	// ===================================================
+		// 	oTable.setModel(this.getView().getModel());
+		// 	oVHCustomer.open();
+		// },
+
 		onAsnValueHelp: function () {
 			var that = this;
 
@@ -610,8 +943,7 @@ sap.ui.define([
 			// 1. Define columns for Value Help
 			// ===================================================
 			var aCols = [
-				{ label: "ASN No", path: "AsnNo", width: "12rem" },
-				// { label: "Customer Name", path: "CustomerName", width: "12rem" }
+				{ label: "ASN No", path: "AsnNo", width: "12rem" }
 			];
 
 			// ===================================================
@@ -620,16 +952,13 @@ sap.ui.define([
 			var oVHCustomer = new ValueHelpDialog({
 				title: "Select ASN",
 				supportMultiselect: true,
-				key: "AsnNo",            // key field
-				descriptionKey: "AsnNo", // field shown in description
+				key: "AsnNo",
+				descriptionKey: "AsnNo",
 				ok: function (e) {
-					var aTokens = e.getParameter("tokens"); // all selected tokens
+					var aTokens = e.getParameter("tokens");
 					var oMultiInput = that.byId("idCustomer");
 
-					// Remove existing tokens before adding new ones
 					oMultiInput.removeAllTokens();
-
-					// Add all selected tokens
 					aTokens.forEach(function (oToken) {
 						oMultiInput.addToken(new sap.m.Token({
 							key: oToken.getKey(),
@@ -637,7 +966,6 @@ sap.ui.define([
 						}));
 					});
 
-					// Fire change event with combined values (optional)
 					var sCombined = aTokens.map(t => t.getKey()).join(", ");
 					oMultiInput.fireChange({
 						value: sCombined,
@@ -655,27 +983,50 @@ sap.ui.define([
 			// 3. Configure Table inside ValueHelpDialog
 			// ===================================================
 			var oTable = oVHCustomer.getTable();
-			// Build mandatory filter for DocumentType
-			// var oDocTypeFilter = new sap.ui.model.Filter("BillingDocumentType", sap.ui.model.FilterOperator.EQ, sDocType);
-			// Add columns and row/item binding depending on table type
+			aCols.forEach(c => {
+				if (oTable.bindRows) {
+					oTable.addColumn(new sap.ui.table.Column({
+						label: c.label,
+						template: new sap.m.Text({ text: "{" + c.path + "}" }),
+						width: c.width
+					}));
+				} else {
+					oTable.addColumn(new sap.m.Column({
+						header: new sap.m.Label({ text: c.label })
+					}));
+				}
+			});
+
+			// ===================================================
+			// 4. Always apply vendor filter (from SupplierModel)
+			// ===================================================
+			var oVendorOrFilter = null;
+			let oSupplierModel = that.getView().getModel("SupplierModel");
+			if (oSupplierModel) {
+				let aData = oSupplierModel.getData();
+				if (Array.isArray(aData) && aData.length > 0) {
+					let aVendorFilters = aData.map(c =>
+						new sap.ui.model.Filter("vendor", sap.ui.model.FilterOperator.EQ, c.Supplier)
+					);
+					oVendorOrFilter = new sap.ui.model.Filter({
+						filters: aVendorFilters,
+						and: false // OR across vendors
+					});
+				}
+			}
+
+			// ===================================================
+			// 5. Bind table with vendor filter applied initially
+			// ===================================================
 			if (oTable.bindRows) {
-				// Grid Table (sap.ui.table.Table)
-				aCols.forEach(c => oTable.addColumn(new sap.ui.table.Column({
-					label: c.label,
-					template: new sap.m.Text({ text: "{" + c.path + "}" }),
-					width: c.width
-				})));
 				oTable.bindRows({
 					path: "/Header",
-					//  filters: [oDocTypeFilter] 
+					filters: oVendorOrFilter ? [oVendorOrFilter] : []
 				});
 			} else {
-				// Responsive Table (sap.m.Table)
-				aCols.forEach(c => oTable.addColumn(new sap.m.Column({
-					header: new sap.m.Label({ text: c.label })
-				})));
 				oTable.bindItems({
 					path: "/Header",
+					filters: oVendorOrFilter ? [oVendorOrFilter] : [],
 					template: new sap.m.ColumnListItem({
 						cells: aCols.map(c => new sap.m.Text({ text: "{" + c.path + "}" }))
 					})
@@ -683,7 +1034,7 @@ sap.ui.define([
 			}
 
 			// ===================================================
-			// 4. Central Search Function
+			// 6. Central Search Function (ANDs with vendor filter)
 			// ===================================================
 			var fnDoSearch = function (sQuery) {
 				sQuery = (sQuery || "").trim();
@@ -692,37 +1043,38 @@ sap.ui.define([
 				var oBinding = oTable.getBinding(sAgg);
 
 				if (!sQuery) {
-					// Clear filters if query empty
-					oBinding.filter([]);
+					// only vendor filter if no search text
+					oBinding.filter(oVendorOrFilter ? [oVendorOrFilter] : []);
 					return;
 				}
 
-				// --- Step A: Try client-side filtering ---
-				var aFilters = aCols.map(c =>
+				// text filters (search by ASN)
+				var aTextFilters = aCols.map(c =>
 					new sap.ui.model.Filter(c.path, sap.ui.model.FilterOperator.Contains, sQuery)
 				);
+				var oTextOrFilter = new sap.ui.model.Filter({ filters: aTextFilters, and: false });
 
-				// combine them with OR
-				var oOrFilter = new sap.ui.model.Filter({
-					filters: aFilters,
-					and: false
+				// combine: vendor AND text
+				var aFinalFilters = [oTextOrFilter];
+				if (oVendorOrFilter) aFinalFilters.push(oVendorOrFilter);
+
+				var oFinalFilter = new sap.ui.model.Filter({
+					filters: aFinalFilters,
+					and: true
 				});
 
-				oBinding.filter([oOrFilter], "Application");
+				oBinding.filter([oFinalFilter], "Application");
 
-				// --- Step B: If no results, fallback to server-side search ---
+				// --- optional: server-side fallback ---
 				if (oBinding.getLength() === 0) {
 					var oModel = that.getView().getModel();
-					// Server-side (ODataModel)
 					oModel.read("/Header", {
-						filters: [oOrFilter],        // <-- use Filter object, not string
+						filters: [oFinalFilter],
 						urlParameters: { "$top": 200 },
 						success: function (oData) {
-							var oJson = new sap.ui.model.json.JSONModel({
-								Header: oData.results
-							});
+							var oJson = new sap.ui.model.json.JSONModel({ Header: oData.results });
 							oTable.setModel(oJson);
-							// rebind to make sure busy state clears
+
 							if (oTable.bindRows) {
 								oTable.bindRows({ path: "/Header" });
 							} else {
@@ -733,6 +1085,7 @@ sap.ui.define([
 									})
 								});
 							}
+
 							oTable.setBusy(false);
 							oVHCustomer.setBusy(false);
 						},
@@ -744,17 +1097,13 @@ sap.ui.define([
 			};
 
 			// ===================================================
-			// 5. SearchField + FilterBar Setup
+			// 7. FilterBar + SearchField Setup
 			// ===================================================
 			var oBasicSearch = new sap.m.SearchField({
 				width: "100%",
-				search: function (oEvt) {   // triggers on Enter or search icon
+				search: function (oEvt) {
 					fnDoSearch(oEvt.getSource().getValue());
 				}
-				// Optional: add liveChange if you want instant typing search
-				// liveChange: function (oEvt) {
-				//     fnDoSearch(oEvt.getSource().getValue());
-				// }
 			});
 
 			var oFilterBar = new sap.ui.comp.filterbar.FilterBar({
@@ -767,15 +1116,379 @@ sap.ui.define([
 			oVHCustomer.setFilterBar(oFilterBar);
 
 			// ===================================================
-			// 6. Prefill Search with existing value (if any)
+			// 8. Prefill & Open
 			// ===================================================
 			var sPrefill = this.byId("idCustomer").getValue();
 			oBasicSearch.setValue(sPrefill);
-			oVHCustomer.setBasicSearchText(sPrefill);
+			oTable.setModel(this.getView().getModel());
+			oVHCustomer.open();
+		},
+		// onPoValueHelp: function () {
+		// 	var that = this;
+
+		// 	// ===================================================
+		// 	// 1. Define columns for Value Help
+		// 	// ===================================================
+		// 	var aCols = [
+		// 		{ label: "PO Number", path: "ponumber", width: "12rem" },
+		// 		// { label: "Customer Name", path: "CustomerName", width: "12rem" }
+		// 	];
+
+		// 	// ===================================================
+		// 	// 2. Create the ValueHelpDialog
+		// 	// ===================================================
+		// 	var oVHCustomer = new ValueHelpDialog({
+		// 		title: "Select PO",
+		// 		supportMultiselect: true,
+		// 		key: "ponumber",            // key field
+		// 		descriptionKey: "ponumber", // field shown in description
+		// 		ok: function (e) {
+		// 			var aTokens = e.getParameter("tokens"); // all selected tokens
+		// 			var oMultiInput = that.byId("idPoNumber");
+
+		// 			// Remove existing tokens before adding new ones
+		// 			oMultiInput.removeAllTokens();
+
+		// 			// Add all selected tokens
+		// 			aTokens.forEach(function (oToken) {
+		// 				oMultiInput.addToken(new sap.m.Token({
+		// 					key: oToken.getKey(),
+		// 					text: oToken.getText()
+		// 				}));
+		// 			});
+
+		// 			// Fire change event with combined values (optional)
+		// 			var sCombined = aTokens.map(t => t.getKey()).join(", ");
+		// 			oMultiInput.fireChange({
+		// 				value: sCombined,
+		// 				newValue: sCombined,
+		// 				valid: true
+		// 			});
+
+		// 			oVHCustomer.close();
+		// 		},
+		// 		cancel: function () { oVHCustomer.close(); },
+		// 		afterClose: function () { oVHCustomer.destroy(); }
+		// 	});
+
+		// 	// ===================================================
+		// 	// 3. Configure Table inside ValueHelpDialog
+		// 	// ===================================================
+		// 	var oTable = oVHCustomer.getTable();
+		// 	// Build mandatory filter for DocumentType
+		// 	// var oDocTypeFilter = new sap.ui.model.Filter("BillingDocumentType", sap.ui.model.FilterOperator.EQ, sDocType);
+		// 	// Add columns and row/item binding depending on table type
+		// 	if (oTable.bindRows) {
+		// 		// Grid Table (sap.ui.table.Table)
+		// 		aCols.forEach(c => oTable.addColumn(new sap.ui.table.Column({
+		// 			label: c.label,
+		// 			template: new sap.m.Text({ text: "{" + c.path + "}" }),
+		// 			width: c.width
+		// 		})));
+		// 		oTable.bindRows({
+		// 			path: "/Header",
+		// 			//  filters: [oDocTypeFilter] 
+		// 		});
+		// 	} else {
+		// 		// Responsive Table (sap.m.Table)
+		// 		aCols.forEach(c => oTable.addColumn(new sap.m.Column({
+		// 			header: new sap.m.Label({ text: c.label })
+		// 		})));
+		// 		oTable.bindItems({
+		// 			path: "/Header",
+		// 			template: new sap.m.ColumnListItem({
+		// 				cells: aCols.map(c => new sap.m.Text({ text: "{" + c.path + "}" }))
+		// 			})
+		// 		});
+		// 	}
+
+		// 	// ===================================================
+		// 	// 4. Central Search Function
+		// 	// ===================================================
+		// 	var fnDoSearch = function (sQuery) {
+		// 		sQuery = (sQuery || "").trim();
+
+		// 		var sAgg = oTable.bindRows ? "rows" : "items";
+		// 		var oBinding = oTable.getBinding(sAgg);
+
+		// 		if (!sQuery) {
+		// 			// Clear filters if query empty
+		// 			oBinding.filter([]);
+		// 			return;
+		// 		}
+
+		// 		// --- Step A: Try client-side filtering ---
+		// 		var aFilters = aCols.map(c =>
+		// 			new sap.ui.model.Filter(c.path, sap.ui.model.FilterOperator.Contains, sQuery)
+		// 		);
+
+		// 		// combine them with OR
+		// 		var oOrFilter = new sap.ui.model.Filter({
+		// 			filters: aFilters,
+		// 			and: false
+		// 		});
+
+		// 		oBinding.filter([oOrFilter], "Application");
+
+		// 		// --- Step B: If no results, fallback to server-side search ---
+		// 		if (oBinding.getLength() === 0) {
+		// 			var oModel = that.getView().getModel();
+		// 			// Server-side (ODataModel)
+		// 			oModel.read("/Header", {
+		// 				filters: [oOrFilter],        // <-- use Filter object, not string
+		// 				urlParameters: { "$top": 200 },
+		// 				success: function (oData) {
+		// 					var oJson = new sap.ui.model.json.JSONModel({
+		// 						Header: oData.results
+		// 					});
+		// 					oTable.setModel(oJson);
+		// 					// rebind to make sure busy state clears
+		// 					if (oTable.bindRows) {
+		// 						oTable.bindRows({ path: "/Header" });
+		// 					} else {
+		// 						oTable.bindItems({
+		// 							path: "/Header",
+		// 							template: new sap.m.ColumnListItem({
+		// 								cells: aCols.map(c => new sap.m.Text({ text: "{" + c.path + "}" }))
+		// 							})
+		// 						});
+		// 					}
+		// 					oTable.setBusy(false);
+		// 					oVHCustomer.setBusy(false);
+		// 				},
+		// 				error: function () {
+		// 					sap.m.MessageToast.show("Server search failed");
+		// 				}
+		// 			});
+		// 		}
+		// 	};
+
+		// 	// ===================================================
+		// 	// 5. SearchField + FilterBar Setup
+		// 	// ===================================================
+		// 	var oBasicSearch = new sap.m.SearchField({
+		// 		width: "100%",
+		// 		search: function (oEvt) {   // triggers on Enter or search icon
+		// 			fnDoSearch(oEvt.getSource().getValue());
+		// 		}
+		// 		// Optional: add liveChange if you want instant typing search
+		// 		// liveChange: function (oEvt) {
+		// 		//     fnDoSearch(oEvt.getSource().getValue());
+		// 		// }
+		// 	});
+
+		// 	var oFilterBar = new sap.ui.comp.filterbar.FilterBar({
+		// 		advancedMode: true,
+		// 		search: function () {
+		// 			fnDoSearch(oBasicSearch.getValue());
+		// 		}
+		// 	});
+		// 	oFilterBar.setBasicSearch(oBasicSearch);
+		// 	oVHCustomer.setFilterBar(oFilterBar);
+
+		// 	// ===================================================
+		// 	// 6. Prefill Search with existing value (if any)
+		// 	// ===================================================
+		// 	var sPrefill = this.byId("idCustomer").getValue();
+		// 	oBasicSearch.setValue(sPrefill);
+		// 	oVHCustomer.setBasicSearchText(sPrefill);
+
+		// 	// ===================================================
+		// 	// 7. Attach model and open dialog
+		// 	// ===================================================
+		// 	oTable.setModel(this.getView().getModel());
+		// 	oVHCustomer.open();
+		// },
+		onPoValueHelp: function () {
+			var that = this;
 
 			// ===================================================
-			// 7. Attach model and open dialog
+			// 1. Define columns for Value Help
 			// ===================================================
+			var aCols = [
+				{ label: "PO Number", path: "ponumber", width: "12rem" }
+			];
+
+			// ===================================================
+			// 2. Create the ValueHelpDialog
+			// ===================================================
+			var oVHCustomer = new ValueHelpDialog({
+				title: "Select PO",
+				supportMultiselect: true,
+				key: "ponumber",
+				descriptionKey: "ponumber",
+				ok: function (e) {
+					var aTokens = e.getParameter("tokens");
+					var oMultiInput = that.byId("idPoNumber");
+
+					oMultiInput.removeAllTokens();
+
+					aTokens.forEach(function (oToken) {
+						oMultiInput.addToken(new sap.m.Token({
+							key: oToken.getKey(),
+							text: oToken.getText()
+						}));
+					});
+
+					var sCombined = aTokens.map(t => t.getKey()).join(", ");
+					oMultiInput.fireChange({
+						value: sCombined,
+						newValue: sCombined,
+						valid: true
+					});
+
+					oVHCustomer.close();
+				},
+				cancel: function () { oVHCustomer.close(); },
+				afterClose: function () { oVHCustomer.destroy(); }
+			});
+
+			// ===================================================
+			// 3. Configure Table inside ValueHelpDialog
+			// ===================================================
+			var oTable = oVHCustomer.getTable();
+
+			aCols.forEach(c => {
+				if (oTable.bindRows) {
+					oTable.addColumn(new sap.ui.table.Column({
+						label: c.label,
+						template: new sap.m.Text({ text: "{" + c.path + "}" }),
+						width: c.width
+					}));
+				} else {
+					oTable.addColumn(new sap.m.Column({
+						header: new sap.m.Label({ text: c.label })
+					}));
+				}
+			});
+
+			// ===================================================
+			// 4. Always apply vendor filter (from SupplierModel)
+			// ===================================================
+			var oVendorOrFilter = null;
+			let oSupplierModel = that.getView().getModel("SupplierModel");
+			if (oSupplierModel) {
+				let aData = oSupplierModel.getData();
+				if (Array.isArray(aData) && aData.length > 0) {
+					let aVendorFilters = aData.map(c =>
+						new sap.ui.model.Filter("vendor", sap.ui.model.FilterOperator.EQ, c.Supplier)
+					);
+					oVendorOrFilter = new sap.ui.model.Filter({
+						filters: aVendorFilters,
+						and: false // OR across vendors
+					});
+				}
+			}
+
+			// ===================================================
+			// 5. Bind table with vendor filter applied initially
+			// ===================================================
+			if (oTable.bindRows) {
+				oTable.bindRows({
+					path: "/Header",
+					filters: oVendorOrFilter ? [oVendorOrFilter] : []
+				});
+			} else {
+				oTable.bindItems({
+					path: "/Header",
+					filters: oVendorOrFilter ? [oVendorOrFilter] : [],
+					template: new sap.m.ColumnListItem({
+						cells: aCols.map(c => new sap.m.Text({ text: "{" + c.path + "}" }))
+					})
+				});
+			}
+
+			// ===================================================
+			// 6. Central Search Function (ANDs with vendor filter)
+			// ===================================================
+			var fnDoSearch = function (sQuery) {
+				sQuery = (sQuery || "").trim();
+				var sAgg = oTable.bindRows ? "rows" : "items";
+				var oBinding = oTable.getBinding(sAgg);
+
+				if (!sQuery) {
+					// Only vendor filter if query is empty
+					oBinding.filter(oVendorOrFilter ? [oVendorOrFilter] : []);
+					return;
+				}
+
+				// text filters for PO Number
+				var aTextFilters = aCols.map(c =>
+					new sap.ui.model.Filter(c.path, sap.ui.model.FilterOperator.Contains, sQuery)
+				);
+				var oTextOrFilter = new sap.ui.model.Filter({
+					filters: aTextFilters,
+					and: false
+				});
+
+				// combine: vendor AND search text
+				var aFinalFilters = [oTextOrFilter];
+				if (oVendorOrFilter) aFinalFilters.push(oVendorOrFilter);
+
+				var oFinalFilter = new sap.ui.model.Filter({
+					filters: aFinalFilters,
+					and: true
+				});
+
+				oBinding.filter([oFinalFilter], "Application");
+
+				// --- Step B: Fallback to server-side search ---
+				if (oBinding.getLength() === 0) {
+					var oModel = that.getView().getModel();
+					oModel.read("/Header", {
+						filters: [oFinalFilter],
+						urlParameters: { "$top": 200 },
+						success: function (oData) {
+							var oJson = new sap.ui.model.json.JSONModel({
+								Header: oData.results
+							});
+							oTable.setModel(oJson);
+
+							if (oTable.bindRows) {
+								oTable.bindRows({ path: "/Header" });
+							} else {
+								oTable.bindItems({
+									path: "/Header",
+									template: new sap.m.ColumnListItem({
+										cells: aCols.map(c => new sap.m.Text({ text: "{" + c.path + "}" }))
+									})
+								});
+							}
+
+							oTable.setBusy(false);
+							oVHCustomer.setBusy(false);
+						},
+						error: function () {
+							sap.m.MessageToast.show("Server search failed");
+						}
+					});
+				}
+			};
+
+			// ===================================================
+			// 7. SearchField + FilterBar Setup
+			// ===================================================
+			var oBasicSearch = new sap.m.SearchField({
+				width: "100%",
+				search: function (oEvt) {
+					fnDoSearch(oEvt.getSource().getValue());
+				}
+			});
+
+			var oFilterBar = new sap.ui.comp.filterbar.FilterBar({
+				advancedMode: true,
+				search: function () {
+					fnDoSearch(oBasicSearch.getValue());
+				}
+			});
+			oFilterBar.setBasicSearch(oBasicSearch);
+			oVHCustomer.setFilterBar(oFilterBar);
+
+			// ===================================================
+			// 8. Prefill Search + Open Dialog
+			// ===================================================
+			var sPrefill = this.byId("idPoNumber").getValue();
+			oBasicSearch.setValue(sPrefill);
 			oTable.setModel(this.getView().getModel());
 			oVHCustomer.open();
 		},
@@ -790,7 +1503,29 @@ sap.ui.define([
 
 		_loadBillingDocumentData: function (aFilters, bReset) {
 			var that = this;
-
+			// ====== Vendor (Mandatory Filter) ======
+			try {
+				var oSupplierModel = this.getView().getModel("SupplierModel");
+				if (oSupplierModel) {
+					var aSupplierData = oSupplierModel.getData();
+					if (aSupplierData && Array.isArray(aSupplierData) && aSupplierData.length > 0) {
+						// Multiple vendor numbers
+						var aVendorFilters = aSupplierData.map(function (oItem) {
+							return new sap.ui.model.Filter("vendor", sap.ui.model.FilterOperator.EQ, oItem.Supplier);
+						});
+						aFilters.push(new sap.ui.model.Filter({ filters: aVendorFilters, and: false }));
+					} else if (aSupplierData && aSupplierData.Supplier) {
+						// Single vendor case
+						aFilters.push(new sap.ui.model.Filter(
+							"vendor",
+							sap.ui.model.FilterOperator.EQ,
+							aSupplierData.Supplier
+						));
+					}
+				}
+			} catch (err) {
+				console.warn("Vendor filter skipped (SupplierModel missing or invalid)", err);
+			}
 			if (bReset) {
 				this._iPage = 0;
 				this._bAllDataLoaded = false;
@@ -899,10 +1634,112 @@ sap.ui.define([
 		// 	this._loadBillingDocumentData(aFilters, true);
 		// },
 
+		// onFilterGo: function (oEvent) {
+		// 	this.getView().setBusy(true);
+		// 	var oFilterBar = this.byId("idFilterBar"); // your filterbar id
+		// 	var oModel = this.getOwnerComponent().getModel(); // OData Model
+		// 	var aFilters = [];
+		// 	let oDateFormat = DateFormat.getInstance({
+		// 		pattern: "yyyy-MM-dd"
+		// 	});
+
+		// 	// ====== Invoice Number (MultiInput) ======
+		// 	var oBillingInput = this.byId("idAccountingDocument");
+		// 	var aBillingDocs = oBillingInput.getTokens();
+		// 	var sBillingRaw = oBillingInput.getValue(); // NEW: catch raw typed value
+
+		// 	if (aBillingDocs.length > 0) {
+		// 		aBillingDocs.forEach(function (oToken) {
+		// 			aFilters.push(new sap.ui.model.Filter(
+		// 				"invoice_no",
+		// 				sap.ui.model.FilterOperator.EQ,
+		// 				oToken.getKey() || oToken.getText()
+		// 			));
+		// 		});
+		// 	}
+		// 	// if user typed directly without pressing enter
+		// 	if (sBillingRaw) { // NEW
+		// 		aFilters.push(new sap.ui.model.Filter(
+		// 			"invoice_no",
+		// 			sap.ui.model.FilterOperator.Contains,
+		// 			sBillingRaw
+		// 		));
+		// 	}
+
+		// 	// ====== Document Date (DateRangeSelection) ======
+		// 	var oDateRange = this.byId("idPostingDate");
+		// 	if (oDateRange.getDateValue() && oDateRange.getSecondDateValue()) {
+		// 		aFilters.push(new sap.ui.model.Filter(
+		// 			"invoice_date",
+		// 			sap.ui.model.FilterOperator.BT,
+		// 			oDateFormat.format(new Date(oDateRange.getDateValue())),
+		// 			oDateFormat.format(new Date(oDateRange.getSecondDateValue()))
+		// 		));
+		// 	}
+
+		// 	// ====== Customer / ASN (MultiInput) ======
+		// 	var oAsnInput = this.byId("idCustomer");
+		// 	var aCustomers = oAsnInput.getTokens();
+		// 	var sAsnRaw = oAsnInput.getValue(); // NEW: catch raw typed ASN
+
+		// 	if (aCustomers.length > 0) {
+		// 		aCustomers.forEach(function (oToken) {
+		// 			aFilters.push(new sap.ui.model.Filter(
+		// 				"AsnNo",
+		// 				sap.ui.model.FilterOperator.EQ,
+		// 				oToken.getKey() || oToken.getText()
+		// 			));
+		// 		});
+		// 	}
+		// 	// if user typed directly without pressing enter
+		// 	if (sAsnRaw) { // NEW
+		// 		aFilters.push(new sap.ui.model.Filter(
+		// 			"AsnNo",
+		// 			sap.ui.model.FilterOperator.Contains,
+		// 			sAsnRaw
+		// 		));
+		// 	}
+		// 	// ====== PO / PO (MultiInput) ======
+		// 	var oPoInput = this.byId("idPoNumber");
+		// 	var aPos = oPoInput.getTokens();
+		// 	var sPoRaw = oPoInput.getValue(); // NEW: catch raw typed PO
+
+		// 	if (aPos.length > 0) {
+		// 		aPos.forEach(function (oToken) {
+		// 			aFilters.push(new sap.ui.model.Filter(
+		// 				"ponumber",
+		// 				sap.ui.model.FilterOperator.EQ,
+		// 				oToken.getKey() || oToken.getText()
+		// 			));
+		// 		});
+		// 	}
+		// 	// if user typed directly without pressing enter
+		// 	if (sPoRaw) { // NEW
+		// 		aFilters.push(new sap.ui.model.Filter(
+		// 			"ponumber",
+		// 			sap.ui.model.FilterOperator.Contains,
+		// 			sPoRaw
+		// 		));
+		// 	}
+
+		// 	// ====== Status (MultiComboBox or MultiSelect) ======
+		// 	var aStatusKeys = this.byId("idStatus").getSelectedKeys();
+		// 	if (aStatusKeys.length > 0) {
+		// 		var aStatusFilters = aStatusKeys.map(function (sKey) {
+		// 			return new sap.ui.model.Filter("Status_Desc", sap.ui.model.FilterOperator.EQ, sKey);
+		// 		});
+		// 		aFilters.push(new sap.ui.model.Filter({ filters: aStatusFilters, and: false })); // OR logic
+		// 	}
+
+		// 	this._aCurrentFilters = aFilters;
+
+		// 	// ====== Call OData Service ======
+		// 	this._loadBillingDocumentData(aFilters, true);
+		// },
 		onFilterGo: function (oEvent) {
 			this.getView().setBusy(true);
-			var oFilterBar = this.byId("idFilterBar"); // your filterbar id
-			var oModel = this.getOwnerComponent().getModel(); // OData Model
+			var oFilterBar = this.byId("idFilterBar");
+			var oModel = this.getOwnerComponent().getModel();
 			var aFilters = [];
 			let oDateFormat = DateFormat.getInstance({
 				pattern: "yyyy-MM-dd"
@@ -911,7 +1748,7 @@ sap.ui.define([
 			// ====== Invoice Number (MultiInput) ======
 			var oBillingInput = this.byId("idAccountingDocument");
 			var aBillingDocs = oBillingInput.getTokens();
-			var sBillingRaw = oBillingInput.getValue(); // NEW: catch raw typed value
+			var sBillingRaw = oBillingInput.getValue();
 
 			if (aBillingDocs.length > 0) {
 				aBillingDocs.forEach(function (oToken) {
@@ -922,8 +1759,7 @@ sap.ui.define([
 					));
 				});
 			}
-			// if user typed directly without pressing enter
-			if (sBillingRaw) { // NEW
+			if (sBillingRaw) {
 				aFilters.push(new sap.ui.model.Filter(
 					"invoice_no",
 					sap.ui.model.FilterOperator.Contains,
@@ -942,10 +1778,10 @@ sap.ui.define([
 				));
 			}
 
-			// ====== Customer / ASN (MultiInput) ======
+			// ====== ASN (MultiInput) ======
 			var oAsnInput = this.byId("idCustomer");
 			var aCustomers = oAsnInput.getTokens();
-			var sAsnRaw = oAsnInput.getValue(); // NEW: catch raw typed ASN
+			var sAsnRaw = oAsnInput.getValue();
 
 			if (aCustomers.length > 0) {
 				aCustomers.forEach(function (oToken) {
@@ -956,8 +1792,7 @@ sap.ui.define([
 					));
 				});
 			}
-			// if user typed directly without pressing enter
-			if (sAsnRaw) { // NEW
+			if (sAsnRaw) {
 				aFilters.push(new sap.ui.model.Filter(
 					"AsnNo",
 					sap.ui.model.FilterOperator.Contains,
@@ -965,15 +1800,62 @@ sap.ui.define([
 				));
 			}
 
-			// ====== Status (MultiComboBox or MultiSelect) ======
+			// ====== PO (MultiInput) ======
+			var oPoInput = this.byId("idPoNumber");
+			var aPos = oPoInput.getTokens();
+			var sPoRaw = oPoInput.getValue();
+
+			if (aPos.length > 0) {
+				aPos.forEach(function (oToken) {
+					aFilters.push(new sap.ui.model.Filter(
+						"ponumber",
+						sap.ui.model.FilterOperator.EQ,
+						oToken.getKey() || oToken.getText()
+					));
+				});
+			}
+			if (sPoRaw) {
+				aFilters.push(new sap.ui.model.Filter(
+					"ponumber",
+					sap.ui.model.FilterOperator.Contains,
+					sPoRaw
+				));
+			}
+
+			// ====== Status (MultiComboBox) ======
 			var aStatusKeys = this.byId("idStatus").getSelectedKeys();
 			if (aStatusKeys.length > 0) {
 				var aStatusFilters = aStatusKeys.map(function (sKey) {
 					return new sap.ui.model.Filter("Status_Desc", sap.ui.model.FilterOperator.EQ, sKey);
 				});
-				aFilters.push(new sap.ui.model.Filter({ filters: aStatusFilters, and: false })); // OR logic
+				aFilters.push(new sap.ui.model.Filter({ filters: aStatusFilters, and: false }));
 			}
 
+			// // ====== Vendor (Mandatory Filter) ======
+			// try {
+			// 	var oSupplierModel = this.getView().getModel("SupplierModel");
+			// 	if (oSupplierModel) {
+			// 		var aSupplierData = oSupplierModel.getData();
+			// 		if (aSupplierData && Array.isArray(aSupplierData) && aSupplierData.length > 0) {
+			// 			// Multiple vendor numbers
+			// 			var aVendorFilters = aSupplierData.map(function (oItem) {
+			// 				return new sap.ui.model.Filter("vendor", sap.ui.model.FilterOperator.EQ, oItem.Supplier);
+			// 			});
+			// 			aFilters.push(new sap.ui.model.Filter({ filters: aVendorFilters, and: false }));
+			// 		} else if (aSupplierData && aSupplierData.Supplier) {
+			// 			// Single vendor case
+			// 			aFilters.push(new sap.ui.model.Filter(
+			// 				"vendor",
+			// 				sap.ui.model.FilterOperator.EQ,
+			// 				aSupplierData.Supplier
+			// 			));
+			// 		}
+			// 	}
+			// } catch (err) {
+			// 	console.warn("Vendor filter skipped (SupplierModel missing or invalid)", err);
+			// }
+
+			// Save current filters
 			this._aCurrentFilters = aFilters;
 
 			// ====== Call OData Service ======
@@ -995,7 +1877,29 @@ sap.ui.define([
 			this.getOwnerComponent().getRouter().navTo("RouteObject", {
 			}, true); // replace with actual route
 
-		}
+		},
+		getUserSupplier: function () {
+			let sUser = sap.ushell?.Container?.getUser().getId() || "CB9980000026";
+			let oSupplierModel = this.getView().getModel('SupplierModel');
+			return new Promise((resolve, reject) => {
+				let oModel = this.getOwnerComponent().getModel("vendorModel");
+				oModel.read("/supplierListByUser", {
+					filters: [
+						new sap.ui.model.Filter("Userid", sap.ui.model.FilterOperator.EQ, sUser)
+					],
+					success: function (oData) {
+						console.log("Fetched supplier list:", oData.results);
+						oSupplierModel.setData(oData.results);
+						resolve(oData);
+					},
+					error: function (oError) {
+						console.error("Error fetching supplier list", oError);
+						reject(oError)
+					}
+				});
+			})
+
+		},
 
 	});
 });

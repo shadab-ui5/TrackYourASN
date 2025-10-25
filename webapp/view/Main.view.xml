@@ -39,6 +39,11 @@
                                         <MultiInput id="idCustomer"  showValueHelp="true" valueHelpRequest="onAsnValueHelp" width="75%" placeholder="Select ASN"/>
                                     </fb:control>
                                 </fb:FilterGroupItem>
+                                <fb:FilterGroupItem id="FilterGroupItem65" name="ponumber" label="PO Number" groupName="Group1" visibleInFilterBar="true">
+                                    <fb:control>
+                                        <MultiInput id="idPoNumber"  showValueHelp="true" valueHelpRequest="onPoValueHelp" width="75%" placeholder="Select PO Number"/>
+                                    </fb:control>
+                                </fb:FilterGroupItem>
                                 <fb:FilterGroupItem id="FilterGroupItem6" name="invoice Date" label="Invoice Date" groupName="Group1" visibleInFilterBar="true">
                                     <fb:control>
                                         <DateRangeSelection id="idPostingDate" class="DRS1" displayFormat="dd-MM-yyyy" change="handleChange" />
@@ -54,6 +59,7 @@
                                             <core:Item id="_IDGenItem3" key="Gate Entry Completed" text="Gate Entry Completed" />
                                             <core:Item id="_IDGenItem4" key="Goods Receipt Rejected" text="Goods Receipt Rejected" />
                                             <core:Item id="_IDGenItem5" key="Goods Receipt Accepted" text="Goods Receipt Accepted" />
+                                            <core:Item id="_IDGenItem6" key="Invoice Created for Payment" text="Invoice Created for Payment" />
                                         </MultiComboBox>
                                     </fb:control>
                                 </fb:FilterGroupItem>
@@ -129,7 +135,7 @@
                                     <Text text="PO Number"/>
                                 </header>
                             </Column>
-                            <Column id="colStatus" app:p13nKey="Status_Desc_col" headerMenu="menu">
+                            <Column id="colStatus" app:p13nKey="Status_Desc_col" headerMenu="menu" width="20%">
                                 <header>
                                     <Text text="Status Description"/>
                                 </header>

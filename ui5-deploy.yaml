@@ -18,6 +18,6 @@ builder:
         app:
           name: ZASNREPORT
           package: ZMM_VENDOR_PORTAL
-          transport: TMOK900595
+          transport: TMOK901286
         exclude:
           - /test/

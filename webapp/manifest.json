@@ -33,6 +33,14 @@
           "localUri": "localService/mainService/metadata.xml",
           "odataVersion": "2.0"
         }
+      },
+      "vendorService": {
+        "uri": "/sap/opu/odata/sap/ZMM_VEND_PORT_SER_BIND/",
+        "type": "OData",
+        "settings": {
+          "localUri": "localService/vendorService/metadata.xml",
+          "odataVersion": "2.0"
+        }
       }
     },
     "crossNavigation": {
@@ -92,6 +100,15 @@
         "dataSource": "mainService",
         "preload": true,
         "settings": {}
+      },
+      "vendorModel": {
+        "dataSource": "vendorService",
+        "preload": true,
+        "settings": {
+          "operationMode": "Server",
+          "autoExpandSelect": true,
+          "earlyRequests": true
+        }
       }
     },
     "resources": {
