@@ -35,6 +35,10 @@
                                             <m:Label text="Amount:"/>
                                             <m:Text text="{selectedModel>/amount}"/>
                                         </m:VBox>
+                                        <m:VBox width="20%">
+                                            <m:Label text="Goods Receipt No"/>
+                                            <m:Text text="{selectedModel>/MaterialDocument}"/>
+                                        </m:VBox>
                                     </m:HBox>
 
                                     <!-- Row 2 -->
@@ -59,6 +63,10 @@
                                             <m:Label text="E-Way Bill No:"/>
                                             <m:Text text="{selectedModel>/ewayno}"/>
                                         </m:VBox>
+                                        <m:VBox width="20%">
+                                            <m:Label text="Eway Bill Date"/>
+                                             <m:Text text="{path:'selectedModel>/ewaybilldate', formatter:'.formatter.formatDateToYyyyMmDd'}"/>
+                                        </m:VBox>
                                     </m:HBox>
 
                                     <!-- Row 3 -->
@@ -81,13 +89,14 @@
                                             <m:Text text="{selectedModel>/SupplierName}({selectedModel>/vendor})"/>
                                         </m:VBox>
                                         <m:VBox width="20%">
-                                            <m:Label text="Goods Receipt No"/>
-                                            <m:Text text="{selectedModel>/MaterialDocument}"/>
-                                        </m:VBox>
-                                        <m:VBox width="20%">
                                             <m:Label text="Supplier Invoice No"/>
                                             <m:Text text="{selectedModel>/supplierinvno}"/>
                                         </m:VBox>
+                                        <m:VBox width="20%">
+
+                                        </m:VBox>
+
+
                                     </m:HBox>
                                 </m:VBox>
 

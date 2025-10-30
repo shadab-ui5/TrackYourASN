@@ -59,7 +59,7 @@
                                             <core:Item id="_IDGenItem3" key="Gate Entry Completed" text="Gate Entry Completed" />
                                             <core:Item id="_IDGenItem4" key="Goods Receipt Rejected" text="Goods Receipt Rejected" />
                                             <core:Item id="_IDGenItem5" key="Goods Receipt Accepted" text="Goods Receipt Accepted" />
-                                            <core:Item id="_IDGenItem6" key="Invoice Created for Payment" text="Invoice Created for Payment" />
+                                            <core:Item id="_IDGenItem6" key="Invoice Posted for Payment" text="Invoice Posted for Payment" />
                                         </MultiComboBox>
                                     </fb:control>
                                 </fb:FilterGroupItem>

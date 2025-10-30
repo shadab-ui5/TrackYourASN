@@ -29,7 +29,7 @@ sap.ui.define([
                         return "sap-icon://error"; // red
                     case "Goods Receipt Accepted":
                         return "sap-icon://sys-enter"; // green
-                    case "Invoice Created for Payment":
+                    case "Invoice Posted for Payment":
                         return "sap-icon://payment-approval"; // green
                     default:
                         return "sap-icon://question-mark";
@@ -49,7 +49,7 @@ sap.ui.define([
                         return "Error"; // Red
                     case "Goods Receipt Accepted":
                         return "Success"; // Green
-                    case "Invoice Created for Payment":
+                    case "Invoice Posted for Payment":
                         return "Indication07"; // Green
                     default:
                         return "None";
@@ -67,7 +67,10 @@ sap.ui.define([
             },
             formatStatusText: function (oRow) {
                 if (!oRow) return "";
-
+                // Rule 4: Status = "01" means CAPA required
+                if (oRow.Status === "01") {
+                    return "Failed. 8D CAPA Required";
+                }
                 // Rule 1: Pending
                 if ((+oRow.InspectionLotOKQty || 0) === 0 && (+oRow.InspectionLotNOTOKQty || 0) === 0) {
                     return "Pending";
@@ -77,18 +80,16 @@ sap.ui.define([
                 if ((+oRow.Postedquantity || 0) === (+oRow.InspectionLotOKQty || 0) && (+oRow.InspectionLotNOTOKQty || 0) === 0) {
                     return "Passed";
                 }
+                if ((+oRow.Postedquantity || 0) > (+oRow.InspectionLotOKQty + (+oRow.InspectionLotNOTOKQty) || 0) && (+oRow.InspectionLotNOTOKQty || 0) === 0) {
+                    return "Passed,Short Goods Receipt";
+                }
 
                 // Rule 3: Failed if NOT OK > 0
                 if ((+oRow.InspectionLotNOTOKQty || 0) > 0) {
                     return "Failed";
                 }
 
-                // Rule 4: Status = "01" means CAPA required
-                if (oRow.Status === "01") {
-                    return "Failed. 8D CAPA Required";
-                }
-
-                return "";
+                return "Lo";
             },
 
             formatStatusState: function (oRow) {
@@ -97,9 +98,14 @@ sap.ui.define([
                 if ((+oRow.InspectionLotOKQty || 0) === 0 && (+oRow.InspectionLotNOTOKQty || 0) === 0) {
                     return "Warning"; // Yellow
                 }
-                if ((+oRow.Postedquantity || 0) === (+oRow.Quantity || 0) && (+oRow.InspectionLotNOTOKQty || 0) === 0) {
+                if ((+oRow.Postedquantity || 0) === (+oRow.InspectionLotOKQty || 0) && (+oRow.InspectionLotNOTOKQty || 0) === 0) {
                     return "Success"; // Green
                 }
+
+                if ((+oRow.Postedquantity || 0) > (+oRow.InspectionLotOKQty + (+oRow.InspectionLotNOTOKQty) || 0) && (+oRow.InspectionLotNOTOKQty || 0) === 0) {
+                    return "Indication06";
+                }
+
                 if ((+oRow.InspectionLotNOTOKQty || 0) > 0 || oRow.Status === "01") {
                     return "Error"; // Red
                 }
@@ -113,8 +119,11 @@ sap.ui.define([
                 if ((+oRow.InspectionLotOKQty || 0) === 0 && (+oRow.InspectionLotNOTOKQty || 0) === 0) {
                     return "sap-icon://pending";
                 }
-                if ((+oRow.Postedquantity || 0) === (+oRow.Quantity || 0) && (+oRow.InspectionLotNOTOKQty || 0) === 0) {
+                if ((+oRow.Postedquantity || 0) === (+oRow.InspectionLotOKQty || 0) && (+oRow.InspectionLotNOTOKQty || 0) === 0) {
                     return "sap-icon://accept";
+                }
+                if ((+oRow.Postedquantity || 0) > (+oRow.InspectionLotOKQty + (+oRow.InspectionLotNOTOKQty) || 0) && (+oRow.InspectionLotNOTOKQty || 0) === 0) {
+                    return "sap-icon://add-activity-2";
                 }
                 if ((+oRow.InspectionLotNOTOKQty || 0) > 0 || oRow.Status === "01") {
                     return "sap-icon://error";
